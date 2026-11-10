@@ -32,8 +32,8 @@ It does not install Android, replace firmware, or include a VPN subscription.
 1. If a maintainer has published a tested installer in **Releases**, download the
    appropriate package, verify its checksum, extract it and run the installer.
 2. Otherwise, download this repository, install **Python 3.10+**, and run
-   `python3 install.py` (`py -3 install.py` on Windows). On macOS you can also
-   open `install.command`; on Windows use `install.bat`.
+   `python3 install.py` (`py -3 install.py` on Windows). On Windows you can also
+   open `install.bat`.
 3. The local wizard opens in your computer's browser. Enter the TV's private
    IPv4 address or use **Find TV**, select **English** or **Русский**, confirm
    that you are authorized to administer that device, then select **Prepare**.
