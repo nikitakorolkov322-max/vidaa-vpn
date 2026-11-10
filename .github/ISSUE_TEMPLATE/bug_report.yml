@@ -1,0 +1,35 @@
+name: Bug report / Ошибка
+description: Report a reproducible issue without private device data.
+body:
+  - type: markdown
+    attributes:
+      value: "Do not post subscriptions, passwords, serials, MACs, private IPs, auth files or runtime exports. Use SECURITY.md for vulnerabilities. / Не публикуйте подписки, ключи, адреса, серийные номера и конфиги."
+  - type: input
+    id: version
+    attributes:
+      label: Project version / Версия проекта
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component / Компонент
+      options:
+        - Installer / Установщик
+        - Russian UI
+        - English UI
+        - VPN runtime
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Synthetic reproduction / Обезличенное воспроизведение
+      description: Steps, expected result, actual result, and a non-secret error code.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy / Приватность
+      options:
+        - label: I removed private information and did not attach runtime files.
+          required: true
