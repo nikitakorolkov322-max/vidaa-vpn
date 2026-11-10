@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="{{LANG}}">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><meta name="vidaa-vpn-token" content="{{TOKEN}}" /><meta
+    name="vidaa-vpn-api"
+    content="{{API}}"
+  /><meta name="vidaa-vpn-mode" content="{{MODE}}" /><title>VIDAA VPN</title
+  ><link rel="stylesheet" href="{{STYLE}}" />
+  <script defer src="{{CATALOG}}"></script>
+  <script defer src="{{APP}}"></script>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <svg aria-hidden="true" viewBox="0 0 128 128" fill="none">
+          <defs>
+            <linearGradient
+              id="v"
+              x1="17"
+              y1="105"
+              x2="108"
+              y2="20"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stop-color="#9875ec" />
+              <stop offset="1" stop-color="#fa78b8" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="9"
+            y="9"
+            width="110"
+            height="110"
+            rx="32"
+            fill="#22162d"
+            stroke="#684475"
+            stroke-width="2"
+          />
+          <path
+            d="M31 39l33 54 33-54"
+            stroke="url(#v)"
+            stroke-width="13"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M45 36l19 32 19-32"
+            stroke="#e9bfff"
+            stroke-width="6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle cx="97" cy="39" r="8" fill="#fa8fc9" />
+        </svg>
+        <span>VIDAA VPN</span>
+      </div>
+      <nav id="nav" class="nav" aria-label="Navigation">
+        <button
+          id="nav-home"
+          data-focus
+          data-view="home"
+          class="selected"
+        ></button
+        ><button id="nav-servers" data-focus data-view="servers"></button
+        ><button
+          id="nav-subscription"
+          data-focus
+          data-view="subscription"
+        ></button
+        ><button
+          id="nav-diagnostics"
+          data-focus
+          data-view="diagnostics"
+        ></button>
+      </nav>
+    </aside>
+    <main class="content" id="content">
+      <header class="topbar">
+        <h1 id="view-title"></h1>
+        <div class="header-actions">
+          <button id="language" data-focus></button
+          ><button id="help" data-focus></button>
+        </div>
+      </header>
+      <section id="view-home" class="view"></section>
+      <section id="view-servers" class="view" hidden></section>
+      <section id="view-subscription" class="view" hidden></section>
+      <section id="view-diagnostics" class="view" hidden></section>
+      <footer id="footer-status" class="status-footer"></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <div class="modal" id="modal" hidden>
+    <div
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+      <button id="modal-cancel" data-focus></button>
+    </div>
+  </div>
+</html>
