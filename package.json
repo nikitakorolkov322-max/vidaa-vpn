@@ -1,0 +1,15 @@
+{
+  "name": "vidaa-vpn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local VIDAA VPN client and installer",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "demo": "python3 tools/demo.py",
+    "logo": "node tools/render_logo.js"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}
