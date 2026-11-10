@@ -1,0 +1,26 @@
+{
+  "sing-box": {
+    "version": "1.14.4",
+    "url": "https://github.com/SagerNet/sing-box/releases/download/v1.14.4/sing-box-1.14.4-linux-arm64-musl.tar.gz",
+    "archive_sha256": "b95e25f921dc5e17a4cf13327243d1177642c7e35425bf5372862c477c359f56",
+    "binary": "sing-box",
+    "binary_sha256": "709d6670c49019955e498872bc39b954461517ad8009968d1cf5592e9087b563",
+    "source": "https://github.com/SagerNet/sing-box/tree/v1.14.4",
+    "license": "GPL-3.0-or-later with upstream additional notice"
+  },
+  "mieru": {
+    "version": "3.39.0",
+    "url": "https://github.com/enfein/mieru/releases/download/v3.39.0/mieru_3.39.0_linux_arm64.tar.gz",
+    "archive_sha256": "23337061e8cbba9869ef17ce2c44121a318a66c40da5e2655e8c0e404b0f18ed",
+    "binary": "mieru",
+    "binary_sha256": "a602e128062784d2204e2641f1e7d176dde11cf9187f5b803dba90685178e3e4",
+    "source": "https://github.com/enfein/mieru/tree/v3.39.0",
+    "license": "GPL-3.0"
+  },
+  "ca": {
+    "url": "https://raw.githubusercontent.com/certifi/python-certifi/ca446ca404ff3b962a0193f36e03d1eabb231968/certifi/cacert.pem",
+    "sha256": "2ef52ad56b4803e264045c915e55c236cbfa045b84b81efefc218a19eb44bd2b",
+    "source": "https://github.com/certifi/python-certifi/tree/ca446ca404ff3b962a0193f36e03d1eabb231968",
+    "license": "MPL-2.0"
+  }
+}

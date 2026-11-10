@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="{{LANG}}">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width"
+  /><title>VIDAA VPN — Setup</title
+  ><style>
+    body {
+      margin: 0;
+      background: #110c1a;
+      color: #fff1fc;
+      font: 26px Arial;
+      padding: 60px;
+      line-height: 1.5;
+    }
+    main {
+      max-width: 1050px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 42px;
+      color: #e2aeff;
+    }
+    #status {
+      background: #291c37;
+      border: 1px solid #694673;
+      border-radius: 20px;
+      padding: 30px;
+      white-space: pre-wrap;
+    }
+    p {
+      color: #baa6c6;
+    }
+    a {
+      display: inline-block;
+      padding: 18px 25px;
+      border: 2px solid #e2aeff;
+      border-radius: 12px;
+      color: #fff1fc;
+      text-decoration: none;
+    }
+    a:focus {
+      outline: 5px solid #f18ac1;
+      outline-offset: 6px;
+    }
+  </style>
+  <main>
+    <h1>VIDAA VPN</h1>
+    <p id="intro"></p>
+    <div id="status"></div>
+    <p id="hint"></p>
+    <a id="open" hidden></a>
+  </main>
+  <script>
+    "use strict";
+    const base = "{{BASE}}",
+      lang = "{{LANG}}",
+      prefix = "{{PREFIX}}",
+      dir = "{{FUNCTIONS}}",
+      ru = lang === "ru",
+      status = document.getElementById("status");
+    const words = ru
+      ? {
+          intro: "Установка приложения",
+          waiting: "Соединяюсь с телевизором…",
+          hint: "Оставьте страницу открытой. Прошивка телевизора не изменяется.",
+          unsupported: "Сервисы этой прошивки не поддерживаются.",
+          checking: "Проверяю совместимость…",
+          place: "Копирую: ",
+          invoke: "Проверяю этап установки…",
+          done: "Готово. Полностью перезагрузите телевизор и откройте VIDAA VPN. Добавьте свою подписку в приложении.",
+          removed: "Приложение удалено. Перезагрузите телевизор.",
+          failed: "Установка остановлена: ",
+          open: "Открыть VIDAA VPN",
+          network:
+            "Соединение прервано. Посмотрите состояние в мастере на компьютере.",
+        }
+      : {
+          intro: "Application setup",
+          waiting: "Connecting to the TV…",
+          hint: "Keep this page open. The TV firmware is not modified.",
+          unsupported: "This firmware does not expose the required services.",
+          checking: "Checking compatibility…",
+          place: "Copying: ",
+          invoke: "Verifying installation…",
+          done: "Complete. Fully restart the TV and open VIDAA VPN. Add your subscription inside the app.",
+          removed: "Application removed. Restart the TV.",
+          failed: "Setup stopped: ",
+          open: "Open VIDAA VPN",
+          network:
+            "Connection interrupted. Check the installer window on your computer.",
+        };
+    document.getElementById("intro").textContent = words.intro;
+    document.getElementById("hint").textContent = words.hint;
+    status.textContent = words.waiting;
+    function place(asset, target, mode) {
+      const result = vowOS.service.syncExecute("basic/fetcher", {
+        api: "fetchFile",
+        args: JSON.stringify({
+          url: location.origin + base + "/files/" + asset,
+          directory: target,
+          permission: mode,
+        }),
+      });
+      if (!result || result.ret !== true) throw Error("TRANSFER_FAILED");
+      let detail = result.msg;
+      try {
+        if (typeof detail === "string") detail = JSON.parse(detail);
+      } catch (_) {}
+      if (detail && detail.result === false) throw Error("TRANSFER_FAILED");
+    }
+    async function send(data) {
+      const response = await fetch(base + "/result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw Error("REPORT_FAILED");
+    }
+    (async () => {
+      if (
+        (Number((navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1]) || 0) <
+          90 ||
+        typeof vowOS === "undefined" ||
+        !vowOS.service
+      )
+        throw Error("PLATFORM_UNSUPPORTED");
+      await new Promise((resolve, reject) => {
+        const ws = new WebSocket("wss://localhost:9888"),
+          timer = setTimeout(() => {
+            ws.close();
+            reject(Error("SERVICE_TIMEOUT"));
+          }, 7000);
+        ws.onopen = () => {
+          ws.send(
+            JSON.stringify({
+              path: "phoenix://service/basic/fetcher",
+              method: "start",
+              parameters: {},
+              session: 1,
+              timeout: 10,
+            }),
+          );
+          setTimeout(() => {
+            clearTimeout(timer);
+            ws.close();
+            resolve();
+          }, 1200);
+        };
+        ws.onerror = () => {
+          clearTimeout(timer);
+          reject(Error("SERVICE_UNAVAILABLE"));
+        };
+      });
+      for (let i = 0; i < 1200; i++) {
+        const response = await fetch(base + "/next");
+        if (!response.ok) throw Error("SESSION_EXPIRED");
+        const job = await response.json();
+        if (job.op === "finish") {
+          status.textContent = job.ok
+            ? job.removed
+              ? words.removed
+              : words.done
+            : words.failed + job.code;
+          if (job.ok && !job.removed) {
+            const link = document.getElementById("open");
+            link.href =
+              "https://localhost:9888/function/basic/fetch/fetchresponse_vidaa_vpn_ui?lang=" +
+              lang;
+            link.textContent = words.open;
+            link.hidden = false;
+          }
+          break;
+        }
+        if (job.op === "invoke" || job.op === "place") {
+          try {
+            if (job.op === "place") {
+              status.textContent = words.place + job.asset;
+              place(job.asset, job.target, job.mode);
+              await send({ id: job.id, result: { ok: true } });
+            } else {
+              status.textContent =
+                job.phase === "preflight" ? words.checking : words.invoke;
+              const name = prefix + "_" + job.id;
+              place(job.asset, dir + name + ".js", 420);
+              const result = await fetch(
+                "https://localhost:9888/function/basic/fetch/" + name,
+                {
+                  method: "POST",
+                  headers: {
+                    identifier: "",
+                    "Content-Type": "application/json",
+                  },
+                  body: "{}",
+                },
+              );
+              let data;
+              try {
+                data = JSON.parse(await result.text());
+              } catch (_) {
+                data = { error: "INVALID_DEVICE_REPLY" };
+              }
+              await send({ id: job.id, result: data });
+            }
+          } catch (error) {
+            await send({ id: job.id, error: "DEVICE_REQUEST_FAILED" });
+          }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    })().catch((error) => {
+      fetch(base + "/result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: "browser",
+          error: /^[A-Z_]+$/.test(error.message)
+            ? error.message
+            : "DEVICE_REQUEST_FAILED",
+        }),
+      }).catch(() => {});
+      status.textContent =
+        error.message === "PLATFORM_UNSUPPORTED"
+          ? words.unsupported
+          : words.network;
+    });
+  </script>
+</html>

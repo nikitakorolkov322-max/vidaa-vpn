@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width"
+  /><title>VIDAA VPN — Installer</title
+  ><style>
+    body {
+      background: #110c1a;
+      color: #fff1fc;
+      font:
+        17px system-ui,
+        sans-serif;
+      margin: 0;
+      padding: 35px;
+    }
+    main {
+      max-width: 760px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 34px;
+    }
+    section {
+      background: #24182e;
+      border: 1px solid #50345e;
+      padding: 28px;
+      border-radius: 20px;
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin: 20px 0 9px;
+    }
+    input[type="text"],
+    select {
+      box-sizing: border-box;
+      width: 100%;
+      font: inherit;
+      color: inherit;
+      background: #150f1e;
+      border: 1px solid #73527f;
+      border-radius: 10px;
+      padding: 13px;
+    }
+    button {
+      font: inherit;
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: 1px solid #a877b5;
+      background: #392341;
+      color: #fff1fc;
+      cursor: pointer;
+      margin: 10px 10px 0 0;
+    }
+    button.primary {
+      background: #dfb1ed;
+      color: #2a1732;
+      font-weight: bold;
+    }
+    button:disabled {
+      opacity: 0.5;
+    }
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #f18ac1;
+      outline-offset: 3px;
+    }
+    p {
+      color: #c1a9cd;
+      line-height: 1.6;
+    }
+    #url {
+      overflow-wrap: anywhere;
+      font-size: 21px;
+      color: #efb8f5;
+    }
+    #progress {
+      white-space: pre-wrap;
+      color: #bfa9cc;
+    }
+    #error {
+      color: #ffb1c2;
+    }
+    small {
+      color: #ac94ba;
+    }
+  </style>
+  <main>
+    <h1>VIDAA VPN</h1>
+    <button id="language">Русский</button>
+    <p id="intro"></p>
+    <section>
+      <label id="tv-label" for="tv"></label
+      ><input
+        id="tv"
+        type="text"
+        autocomplete="off"
+        placeholder="TV IPv4"
+      /><button id="discover"></button
+      ><select id="devices" hidden></select
+      ><label id="app-language-label" for="app-language"></label
+      ><select id="app-language">
+        <option value="en">English</option>
+        <option value="ru">Русский</option></select
+      ><label id="operation-label" for="operation"></label
+      ><select id="operation">
+        <option value="install" id="install-option"></option>
+        <option value="remove" id="remove-option"></option></select
+      ><label
+        ><input id="authorized" type="checkbox" />
+        <span id="authorization"></span
+      ></label>
+      <p id="privileged"></p>
+      <button id="start" class="primary"></button>
+    </section>
+    <section>
+      <h2 id="step-title"></h2>
+      <div id="progress"></div>
+      <p id="error"></p>
+      <p id="url"></p>
+      <button id="copy" hidden></button>
+      <p id="instructions"></p>
+      <button id="finish"></button>
+    </section>
+    <small id="privacy"></small>
+  </main>
+  <script>
+    const key = "{{TOKEN}}",
+      $ = (id) => document.getElementById(id);
+    let lang = navigator.language.toLowerCase().startsWith("ru") ? "ru" : "en",
+      busy = false,
+      url = "",
+      locked = false;
+    const catalogs = {
+      en: {
+        intro: "Prepare the TV, then open one address in its browser.",
+        tv: "TV IPv4 address",
+        discover: "Find TV",
+        appLanguage: "TV interface language",
+        operation: "Action",
+        install: "Install / update",
+        remove: "Remove app and its data",
+        authorization: "I own or am authorized to administer this TV.",
+        privileged:
+          "Experimental installer for supported VIDAA / MediaTek firmware. It uses privileged installation access and writes application data, not firmware. Use a trusted local network.",
+        start: "Prepare",
+        step: "Installation",
+        finish: "Finish and close installer",
+        copy: "Copy address",
+        instructions:
+          "When the address appears, open it in the TV browser and keep that page open. After success, fully restart the TV and add your subscription in VIDAA VPN.",
+        privacy:
+          "No subscriptions, passwords or control tokens are requested by this PC wizard. No telemetry. The temporary TV server accepts only the selected TV IP.",
+        ready: "Open the address below on the TV.",
+        complete:
+          "Complete. Restart the TV. The computer is no longer required.",
+        failed:
+          "Installation stopped. Read the error code; do not change the firmware.",
+        idle: "Enter the TV address to begin.",
+        preparing: "Downloading and verifying official components…",
+        copying: "Copying application files…",
+        checking: "Checking the television…",
+        error: "Could not start the operation.",
+        none: "No TV discovered. Enter its IP manually.",
+      },
+      ru: {
+        intro: "Подготовьте телевизор и откройте один адрес в его браузере.",
+        tv: "IPv4-адрес телевизора",
+        discover: "Найти телевизор",
+        appLanguage: "Язык интерфейса на ТВ",
+        operation: "Действие",
+        install: "Установить / обновить",
+        remove: "Удалить приложение и его данные",
+        authorization:
+          "Я владею телевизором или имею разрешение на его администрирование.",
+        privileged:
+          "Экспериментальный установщик для совместимых прошивок VIDAA / MediaTek. Использует привилегированную установку и меняет данные приложения, а не прошивку. Нужна доверенная домашняя сеть.",
+        start: "Подготовить",
+        step: "Установка",
+        finish: "Завершить и закрыть мастер",
+        copy: "Копировать адрес",
+        instructions:
+          "Откройте появившийся адрес в браузере ТВ и оставьте страницу открытой. После успешной установки полностью перезагрузите ТВ и добавьте свою подписку в VIDAA VPN.",
+        privacy:
+          "Мастер на компьютере не запрашивает подписки, пароли или ключи управления. Телеметрии нет. Временный сервер принимает запросы только от выбранного IP телевизора.",
+        ready: "Откройте адрес ниже на телевизоре.",
+        complete: "Готово. Перезагрузите ТВ. Компьютер больше не нужен.",
+        failed:
+          "Установка остановлена. Посмотрите код ошибки; прошивку менять не нужно.",
+        idle: "Введите IP телевизора.",
+        preparing: "Скачиваю и проверяю официальные компоненты…",
+        copying: "Копирую файлы приложения…",
+        checking: "Проверяю телевизор…",
+        error: "Не удалось запустить операцию.",
+        none: "Телевизор не найден. Введите его IP вручную.",
+      },
+    };
+    function paint() {
+      const t = catalogs[lang];
+      document.documentElement.lang = lang;
+      $("language").textContent = lang === "ru" ? "English" : "Русский";
+      for (const [id, k] of Object.entries({
+        intro: "intro",
+        "tv-label": "tv",
+        discover: "discover",
+        "app-language-label": "appLanguage",
+        "operation-label": "operation",
+        "install-option": "install",
+        "remove-option": "remove",
+        authorization: "authorization",
+        privileged: "privileged",
+        start: "start",
+        "step-title": "step",
+        finish: "finish",
+        copy: "copy",
+        instructions: "instructions",
+        privacy: "privacy",
+      }))
+        $(id).textContent = t[k];
+    }
+    async function api(path, data) {
+      const response = await fetch("/api/" + path, {
+        method: data ? "POST" : "GET",
+        headers: { "X-Installer-Key": key, "Content-Type": "application/json" },
+        body: data ? JSON.stringify(data) : undefined,
+      });
+      if (!response.ok) throw Error();
+      return response.json();
+    }
+    $("language").onclick = () => {
+      lang = lang === "en" ? "ru" : "en";
+      paint();
+    };
+    $("discover").onclick = async () => {
+      try {
+        const r = await api("discover", {});
+        $("devices").replaceChildren();
+        for (const [ip, name] of r.devices)
+          $("devices").add(new Option(name + " — " + ip, ip));
+        $("devices").hidden = !r.devices.length;
+        if (r.devices.length) $("tv").value = r.devices[0][0];
+        else $("error").textContent = catalogs[lang].none;
+      } catch (_) {
+        $("error").textContent = catalogs[lang].error;
+      }
+    };
+    $("devices").onchange = () => ($("tv").value = $("devices").value);
+    $("start").onclick = async () => {
+      if (busy) return;
+      $("error").textContent = "";
+      if (!$("authorized").checked) {
+        $("authorized").focus();
+        $("error").textContent = catalogs[lang].authorization;
+        return;
+      }
+      if (
+        $("operation").value === "remove" &&
+        !confirm(catalogs[lang].remove + "?")
+      )
+        return;
+      busy = true;
+      $("start").disabled = true;
+      try {
+        const r = await api("start", {
+          tv: $("tv").value.trim(),
+          language: $("app-language").value,
+          operation: $("operation").value,
+          authorized: true,
+        });
+        if (r.error) {
+          $("error").textContent = r.error;
+          busy = false;
+          $("start").disabled = false;
+        }
+      } catch (_) {
+        $("error").textContent = catalogs[lang].error;
+        busy = false;
+        $("start").disabled = false;
+      }
+    };
+    $("copy").onclick = () =>
+      navigator.clipboard.writeText(url).catch(() => {});
+    $("finish").onclick = async () => {
+      if (
+        busy &&
+        !confirm(
+          lang === "ru"
+            ? "Остановить незавершённую установку?"
+            : "Stop the unfinished setup?",
+        )
+      )
+        return;
+      await api("stop", {});
+      $("progress").textContent =
+        lang === "ru"
+          ? "Мастер закрыт. Можно закрыть вкладку."
+          : "Installer closed. You can close this tab.";
+      locked = true;
+    };
+    setInterval(async () => {
+      if (locked) return;
+      try {
+        const r = await api("status"),
+          t = catalogs[lang];
+        if (r.state === "complete" || r.state === "failed") {
+          busy = false;
+          $("start").disabled = false;
+        }
+        url = r.url || "";
+        $("url").textContent = url;
+        $("copy").hidden = !url;
+        $("error").textContent =
+          r.error || (r.report && !r.report.ok ? r.report.code : "");
+        $("progress").textContent =
+          t[r.state] ||
+          (r.progress.startsWith("COPYING") ? t.copying : t.checking);
+      } catch (_) {}
+    }, 1000);
+    $("app-language").value = lang;
+    paint();
+  </script>
+</html>
